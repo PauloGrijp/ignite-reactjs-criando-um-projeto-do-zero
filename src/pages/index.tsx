@@ -31,11 +31,12 @@ interface HomeProps {
 export default function Home(): ReactElement {
   return (
     <>
-      <main>
+      <main className={commonStyles.container}>
         <Header />
-        <div>
+
+        <div className={styles.posts}>
           <Link href="/">
-            <a>
+            <a className={styles.post}>
               <strong>Título</strong>
               <p>Subtítulo: Descrição do subtitulo</p>
               <ul>

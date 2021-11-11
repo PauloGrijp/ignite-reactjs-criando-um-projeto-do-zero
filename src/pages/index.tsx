@@ -5,11 +5,13 @@ import { FiCalendar, FiUser } from 'react-icons/fi';
 import Prismic from '@prismicio/client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Head } from 'next/document';
 import Header from '../components/Header';
 import { getPrismicClient } from '../services/prismic';
 
 import commonStyles from '../styles/common.module.scss';
 import styles from './home.module.scss';
+import { formattedPosts } from '../helpers/formattedPosts';
 
 interface Post {
   uid?: string;
@@ -31,23 +33,44 @@ interface HomeProps {
 }
 
 export default function Home({ postsPagination }: HomeProps): ReactElement {
-  const formattedDatePost = postsPagination.results.map(post => {
-    return {
-      ...post,
-      first_publication_date: format(
-        new Date(post.first_publication_date),
-        'dd MMM yyyy',
-        {
-          locale: ptBR,
-        }
-      ),
-    };
-  });
+  const formatted = formattedPosts(postsPagination.results);
 
-  const [posts, setPosts] = useState(formattedDatePost);
+  const [posts, setPosts] = useState<Post[]>(formatted);
+  const [nextPage, setNextPage] = useState(postsPagination.next_page);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  async function handleNextPage(): Promise<void> {
+    if (currentPage !== 1 && nextPage === null) {
+      return;
+    }
+
+    const postsResults = await fetch(`${nextPage}`).then(response =>
+      response.json()
+    );
+    setNextPage(postsResults.next_page);
+    setCurrentPage(postsResults.page);
+
+    const newPosts = postsResults.results.map(post => {
+      return {
+        uid: post.uid,
+        first_publication_date: post.first_publication_date,
+        data: {
+          title: post.data.title,
+          subtitle: post.data.subtitle,
+          author: post.data.author,
+        },
+      };
+    });
+
+    const formattedNewPosts = formattedPosts(newPosts);
+    setPosts([...posts, ...formattedNewPosts]);
+  }
 
   return (
     <>
+      <Head>
+        <title>Home | spacetraveling</title>
+      </Head>
       <main className={commonStyles.container}>
         <Header />
 
@@ -70,7 +93,11 @@ export default function Home({ postsPagination }: HomeProps): ReactElement {
               </a>
             </Link>
           ))}
-          <button type="button">Carregar mais posts</button>
+          {nextPage && (
+            <button type="button" onClick={handleNextPage}>
+              Carregar mais posts
+            </button>
+          )}
         </div>
       </main>
     </>

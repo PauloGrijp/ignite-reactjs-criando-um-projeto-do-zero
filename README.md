@@ -41,7 +41,7 @@ $ cd ignite-reactjs-criando-um-projeto-do-zero
 
 # Crie um arquivo .env.local e coloque as variaveis
 # de ambiente baseado no arquivo .env.example que
-# se encontra na pasta moveit
+# se encontra na raiz do projeto
 
 # Instale as dependências
 $ yarn

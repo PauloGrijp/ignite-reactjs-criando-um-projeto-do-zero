@@ -8,6 +8,7 @@ import { FiCalendar, FiClock, FiUser } from 'react-icons/fi';
 import Prismic from '@prismicio/client';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import Link from 'next/link';
 import { ptBR } from 'date-fns/locale';
 import { format } from 'date-fns';
 import Header from '../../components/Header';
@@ -15,6 +16,7 @@ import { getPrismicClient } from '../../services/prismic';
 
 import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
+import Comments from '../../components/Comments';
 
 interface Post {
   first_publication_date: string | null;
@@ -35,9 +37,10 @@ interface Post {
 
 interface PostProps {
   post: Post;
+  preview: boolean;
 }
 
-export default function Post({ post }: PostProps): ReactElement {
+export default function Post({ post, preview }: PostProps): ReactElement {
   const router = useRouter();
 
   if (router.isFallback) {
@@ -105,6 +108,16 @@ export default function Post({ post }: PostProps): ReactElement {
             );
           })}
         </div>
+
+        <Comments />
+
+        {preview && (
+          <aside>
+            <Link href="/api/exit-preview">
+              <a className={commonStyles.preview}>Sair do modo preview</a>
+            </Link>
+          </aside>
+        )}
       </main>
     </>
   );
@@ -130,10 +143,16 @@ export const getStaticPaths: GetStaticPaths = async () => {
   };
 };
 
-export const getStaticProps: GetStaticProps = async context => {
+export const getStaticProps: GetStaticProps = async ({
+  params,
+  preview = false,
+  previewData,
+}) => {
   const prismic = getPrismicClient();
-  const { slug } = context.params;
-  const response = await prismic.getByUID('posts', String(slug), {});
+  const { slug } = params;
+  const response = await prismic.getByUID('posts', String(slug), {
+    ref: previewData?.ref || null,
+  });
 
   const post = {
     uid: response.uid,
@@ -155,6 +174,9 @@ export const getStaticProps: GetStaticProps = async context => {
   };
 
   return {
-    props: { post },
+    props: {
+      post,
+      preview,
+    },
   };
 };

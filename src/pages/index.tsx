@@ -10,6 +10,7 @@ import { getPrismicClient } from '../services/prismic';
 import commonStyles from '../styles/common.module.scss';
 import styles from './home.module.scss';
 import { formattedPosts } from '../helpers/formattedPosts';
+import Comments from '../components/Comments';
 
 interface Post {
   uid?: string;
@@ -28,9 +29,13 @@ interface PostPagination {
 
 interface HomeProps {
   postsPagination: PostPagination;
+  preview: boolean;
 }
 
-export default function Home({ postsPagination }: HomeProps): ReactElement {
+export default function Home({
+  postsPagination,
+  preview,
+}: HomeProps): ReactElement {
   const formatted = formattedPosts(postsPagination.results);
 
   const [posts, setPosts] = useState<Post[]>(formatted);
@@ -97,12 +102,19 @@ export default function Home({ postsPagination }: HomeProps): ReactElement {
             </button>
           )}
         </div>
+        {preview && (
+          <aside>
+            <Link href="/api/exit-preview">
+              <a className={commonStyles.preview}>Sair do modo preview</a>
+            </Link>
+          </aside>
+        )}
       </main>
     </>
   );
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async ({ preview = false }) => {
   const prismic = getPrismicClient();
   const postsResponse = await prismic.query(
     [Prismic.Predicates.at('document.type', 'posts')],
@@ -127,6 +139,6 @@ export const getStaticProps: GetStaticProps = async () => {
   };
 
   return {
-    props: { postsPagination },
+    props: { postsPagination, preview },
   };
 };
